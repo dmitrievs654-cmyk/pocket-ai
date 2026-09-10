@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Option Live Analyzer</title>
+    <script src="https://telegram.org"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #121216; color: #ffffff; text-align: center; padding: 20px; margin: 0; }
+        .wrapper { background: #1a1a24; border-radius: 20px; padding: 30px; max-width: 320px; margin: 40px auto; border: 1px solid #2b2b3a; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h2 { color: #00e5ff; font-size: 20px; margin-bottom: 25px; }
+        select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: none; font-size: 16px; font-weight: bold; box-sizing: border-box; }
+        select { background: #252533; color: white; cursor: pointer; }
+        button { background: #00e5ff; color: #121216; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .loader { display: none; margin: 20px 0; color: #868699; font-style: italic; font-size: 14px; }
+        .result { display: none; margin-top: 25px; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; }
+        .up { background: #1b5e20; border: 1px solid #4caf50; }
+        .down { background: #b71c1c; border: 1px solid #f44336; }
+        .hold { background: #424242; border: 1px solid #9e9e9e; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <h2>POCKET AI ANALYZER</h2>
+        <select id="asset">
+            <option value="BTC">Bitcoin (BTC/USDT)</option>
+            <option value="ETH">Ethereum (ETH/USDT)</option>
+            <option value="BNB">BNB (BNB/USDT)</option>
+        </select>
+        <button id="btn" onclick="fetchLiveSignal()">АНАЛИЗИРОВАТЬ ГРАФИК</button>
+        <div id="loader" class="loader">Python сканирует свечи Binance...</div>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // ВНИМАНИЕ: Сюда вы вставите вашу ссылку из ngrok на Шаге 4
+        const SERVER_URL = "СЮДА_ВСТАВИТЬ_АДРЕС_NGROK";
+
+        async function fetchLiveSignal() {
+            const btn = document.getElementById('btn');
+            const loader = document.getElementById('loader');
+            const result = document.getElementById('result');
+            const asset = document.getElementById('asset').value;
+
+            btn.style.display = 'none';
+            result.style.display = 'none';
+            loader.style.display = 'block';
+
+            try {
+                // Запрос к локальному Python-серверу через ngrok туннель
+                const response = await fetch(`${SERVER_URL}/api/get_signal/${asset}`);
+                const data = await response.json();
+                
+                loader.style.display = 'none';
+                btn.style.display = 'block';
+                result.style.display = 'block';
+
+                if (data.decision === "UP") {
+                    result.className = "result up";
+                    result.innerHTML = `🟢 ВВЕРХ (CALL)<br><span style='font-size:12px; font-weight:normal;'>RSI в зоне перепроданности. Вход на 1 мин.</span>`;
+                } else if (data.decision === "DOWN") {
+                    result.className = "result down";
+                    result.innerHTML = `🔴 ВНИЗ (PUT)<br><span style='font-size:12px; font-weight:normal;'>RSI в зоне перекупленности. Вход на 1 мин.</span>`;
+                } else {
+                    result.className = "result hold";
+                    result.innerHTML = `⏳ СИГНАЛА НЕТ<br><span style='font-size:12px; font-weight:normal;'>Рынок стабилен. Попробуйте другой актив.</span>`;
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                btn.style.display = 'block';
+                result.style.display = 'block';
+                result.className = "result hold";
+                result.innerHTML = "❌ Ошибка связи с Python-сервером";
+            }
+        }
+    </script>
+</body>
+</html>
