@@ -22,7 +22,7 @@
 </head>
 <body>
     <div class="wrapper">
-        <h2>POCKET AI ANALYZER v2.0</h2>
+        <h2>POCKET AI ANALYZER v3.0</h2>
         <select id="asset">
             <optgroup label="Основные пары (Мажоры)">
                 <option value="EURUSD">EUR/USD</option>
@@ -54,8 +54,9 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Ссылка туннеля строго с протоколом https://
-        const SERVER_URL = "https://localto.net";
+        // МАГИЯ: Сайт больше не хранит ссылку, а автоматически берет адрес туннеля из Telegram!
+        const urlParams = new URLSearchParams(window.location.search);
+        const SERVER_URL = urlParams.get('server_url') || "https://localto.net";
 
         async function fetchLiveSignal() {
             const btn = document.getElementById('btn');
@@ -68,6 +69,7 @@
             loader.style.display = 'block';
 
             try {
+                // Шлем запрос напрямую по динамическому адресу
                 const response = await fetch(`${SERVER_URL}/api/get_signal/${asset}`);
                 const data = await response.json();
                 
